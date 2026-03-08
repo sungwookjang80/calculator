@@ -3,54 +3,137 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>계산기</title>
+  <title>계산기 + CCTV</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
       min-height: 100vh;
       background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
       font-family: 'Segoe UI', sans-serif;
+      padding: 24px;
+      gap: 20px;
     }
 
-    .clock {
-      text-align: center;
-      margin-bottom: 16px;
+    /* ── 상단: CCTV + 계산기 ── */
+    .main-row {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
     }
 
-    .clock-time {
+    /* ── CCTV 패널 ── */
+    .cctv-panel {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      overflow: hidden;
+      width: 640px;
+      height: 520px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    }
+
+    .cctv-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: rgba(0,0,0,0.3);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .cctv-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       color: #fff;
-      font-size: 28px;
-      font-weight: 200;
-      letter-spacing: 4px;
+      font-size: 14px;
+      font-weight: 500;
     }
 
-    .clock-date {
-      color: rgba(255, 255, 255, 0.45);
-      font-size: 13px;
-      margin-top: 4px;
-      letter-spacing: 1px;
+    .live-dot {
+      width: 8px; height: 8px;
+      background: #ff4444;
+      border-radius: 50%;
+      animation: pulse 1.2s infinite;
     }
+
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.4; transform:scale(0.8); }
+    }
+
+    .cctv-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(83,130,255,0.25);
+      color: #7fa8ff;
+      border: 1px solid rgba(83,130,255,0.3);
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 12px;
+      transition: background 0.15s;
+    }
+    .cctv-link-btn:hover { background: rgba(83,130,255,0.45); }
+
+    .cctv-body { flex: 1; position: relative; }
+
+    .cctv-iframe { width:100%; height:100%; border:none; display:block; }
+
+    .cctv-fallback {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 16px;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+      padding: 24px;
+    }
+    .cctv-fallback .icon { font-size: 48px; }
+    .cctv-fallback p { font-size: 14px; line-height: 1.6; }
+
+    .open-btn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #5382ff, #3a5fe0);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .open-btn:hover { opacity: 0.85; }
+
+    /* ── 시계 + 계산기 ── */
+    .right-panel { display: flex; flex-direction: column; }
+
+    .clock { text-align: center; margin-bottom: 16px; }
+    .clock-time { color:#fff; font-size:28px; font-weight:200; letter-spacing:4px; }
+    .clock-date { color:rgba(255,255,255,0.45); font-size:13px; margin-top:4px; letter-spacing:1px; }
 
     .calculator {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255,255,255,0.05);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255,255,255,0.1);
       border-radius: 24px;
       padding: 24px;
       width: 320px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
     }
 
     .display {
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0,0,0,0.3);
       border-radius: 16px;
       padding: 20px;
       margin-bottom: 20px;
@@ -62,7 +145,7 @@
     }
 
     .expression {
-      color: rgba(255, 255, 255, 0.4);
+      color: rgba(255,255,255,0.4);
       font-size: 14px;
       min-height: 20px;
       margin-bottom: 8px;
@@ -93,263 +176,400 @@
       font-size: 18px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.15s;
       outline: none;
     }
+    button:active { transform: scale(0.93); }
 
-    button:active {
-      transform: scale(0.93);
+    .btn-num { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.06); }
+    .btn-num:hover { background:rgba(255,255,255,0.15); }
+    .btn-op { background:rgba(83,130,255,0.2); color:#7fa8ff; border:1px solid rgba(83,130,255,0.2); }
+    .btn-op:hover { background:rgba(83,130,255,0.35); }
+    .btn-eq { background:linear-gradient(135deg,#5382ff,#3a5fe0); color:#fff; border:none; box-shadow:0 4px 20px rgba(83,130,255,0.4); }
+    .btn-eq:hover { background:linear-gradient(135deg,#6b95ff,#4f72f0); }
+    .btn-clear { background:rgba(255,80,80,0.15); color:#ff7070; border:1px solid rgba(255,80,80,0.15); }
+    .btn-clear:hover { background:rgba(255,80,80,0.3); }
+    .btn-special { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.06); }
+    .btn-special:hover { background:rgba(255,255,255,0.12); }
+    .span-2 { grid-column: span 2; }
+
+    /* ── 날씨 바 ── */
+    .weather-bar {
+      width: 100%;
+      max-width: 1008px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      flex-wrap: wrap;
     }
 
-    /* 숫자 버튼 */
-    .btn-num {
-      background: rgba(255, 255, 255, 0.08);
+    .weather-location {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+    }
+
+    .weather-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .weather-emoji { font-size: 32px; }
+
+    .weather-temp {
       color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 28px;
+      font-weight: 300;
     }
 
-    .btn-num:hover {
-      background: rgba(255, 255, 255, 0.15);
+    .weather-desc {
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
     }
 
-    /* 연산자 버튼 */
-    .btn-op {
-      background: rgba(83, 130, 255, 0.2);
-      color: #7fa8ff;
-      border: 1px solid rgba(83, 130, 255, 0.2);
+    .weather-details {
+      display: flex;
+      gap: 20px;
     }
 
-    .btn-op:hover {
-      background: rgba(83, 130, 255, 0.35);
+    .weather-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
     }
 
-    /* 등호 버튼 */
-    .btn-eq {
-      background: linear-gradient(135deg, #5382ff, #3a5fe0);
-      color: #fff;
-      border: none;
-      box-shadow: 0 4px 20px rgba(83, 130, 255, 0.4);
+    .weather-item .label {
+      color: rgba(255,255,255,0.4);
+      font-size: 11px;
     }
 
-    .btn-eq:hover {
-      background: linear-gradient(135deg, #6b95ff, #4f72f0);
-      box-shadow: 0 4px 25px rgba(83, 130, 255, 0.6);
+    .weather-item .value {
+      color: rgba(255,255,255,0.85);
+      font-size: 14px;
+      font-weight: 500;
     }
 
-    /* 초기화 버튼 */
-    .btn-clear {
-      background: rgba(255, 80, 80, 0.15);
-      color: #ff7070;
-      border: 1px solid rgba(255, 80, 80, 0.15);
+    .weather-loading {
+      color: rgba(255,255,255,0.4);
+      font-size: 14px;
+      animation: blink 1.2s infinite;
     }
 
-    .btn-clear:hover {
-      background: rgba(255, 80, 80, 0.3);
+    @keyframes blink {
+      0%,100% { opacity:1; }
+      50% { opacity:0.3; }
     }
 
-    /* 특수 버튼 (CE, ±, %) */
-    .btn-special {
-      background: rgba(255, 255, 255, 0.06);
-      color: rgba(255, 255, 255, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+    .weather-updated {
+      color: rgba(255,255,255,0.3);
+      font-size: 11px;
+      margin-left: auto;
     }
 
-    .btn-special:hover {
-      background: rgba(255, 255, 255, 0.12);
-    }
-
-    .span-2 {
-      grid-column: span 2;
+    @media (max-width: 1050px) {
+      .main-row { flex-direction: column; align-items: center; }
+      .cctv-panel { width: 100%; max-width: 640px; }
+      .weather-bar { max-width: 640px; }
     }
   </style>
 </head>
 <body>
-  <div>
-    <div class="clock">
-      <div class="clock-time" id="clock-time">00:00:00</div>
-      <div class="clock-date" id="clock-date"></div>
+
+  <div class="main-row">
+    <!-- CCTV -->
+    <div class="cctv-panel">
+      <div class="cctv-header">
+        <div class="cctv-title">
+          <div class="live-dot"></div>
+          네이버 실시간 교통 CCTV #6075
+        </div>
+        <a class="cctv-link-btn"
+           href="https://rtt.map.naver.com/end-traffic/ends/web/home#cctv=6075"
+           target="_blank" rel="noopener">↗ 새 탭으로 열기</a>
+      </div>
+      <div class="cctv-body">
+        <iframe
+          id="cctv-frame"
+          class="cctv-iframe"
+          src="https://rtt.map.naver.com/end-traffic/ends/web/home#cctv=6075"
+          title="네이버 교통 CCTV"
+          sandbox="allow-scripts allow-same-origin allow-forms"
+        ></iframe>
+        <div class="cctv-fallback" id="cctv-fallback">
+          <div class="icon">📡</div>
+          <p>네이버 CCTV는 보안 정책(X-Frame-Options)으로<br>직접 삽입이 차단되어 있습니다.<br>아래 버튼으로 새 탭에서 확인하세요.</p>
+          <a class="open-btn"
+             href="https://rtt.map.naver.com/end-traffic/ends/web/home#cctv=6075"
+             target="_blank" rel="noopener">CCTV 보기</a>
+        </div>
+      </div>
     </div>
-    <div class="calculator">
-    <div class="display">
-      <div class="expression" id="expression"></div>
-      <div class="result" id="result">0</div>
+
+    <!-- 시계 + 계산기 -->
+    <div class="right-panel">
+      <div class="clock">
+        <div class="clock-time" id="clock-time">00:00:00</div>
+        <div class="clock-date" id="clock-date"></div>
+      </div>
+      <div class="calculator">
+        <div class="display">
+          <div class="expression" id="expression"></div>
+          <div class="result" id="result">0</div>
+        </div>
+        <div class="buttons">
+          <button class="btn-clear" onclick="clearAll()">AC</button>
+          <button class="btn-special" onclick="toggleSign()">±</button>
+          <button class="btn-special" onclick="percent()">%</button>
+          <button class="btn-op" onclick="inputOp('/')">÷</button>
+
+          <button class="btn-num" onclick="inputNum('7')">7</button>
+          <button class="btn-num" onclick="inputNum('8')">8</button>
+          <button class="btn-num" onclick="inputNum('9')">9</button>
+          <button class="btn-op" onclick="inputOp('*')">×</button>
+
+          <button class="btn-num" onclick="inputNum('4')">4</button>
+          <button class="btn-num" onclick="inputNum('5')">5</button>
+          <button class="btn-num" onclick="inputNum('6')">6</button>
+          <button class="btn-op" onclick="inputOp('-')">−</button>
+
+          <button class="btn-num" onclick="inputNum('1')">1</button>
+          <button class="btn-num" onclick="inputNum('2')">2</button>
+          <button class="btn-num" onclick="inputNum('3')">3</button>
+          <button class="btn-op" onclick="inputOp('+')">+</button>
+
+          <button class="btn-num span-2" onclick="inputNum('0')">0</button>
+          <button class="btn-num" onclick="inputDot()">.</button>
+          <button class="btn-eq" onclick="calculate()">=</button>
+        </div>
+      </div>
     </div>
-    <div class="buttons">
-      <button class="btn-clear" onclick="clearAll()">AC</button>
-      <button class="btn-special" onclick="toggleSign()">±</button>
-      <button class="btn-special" onclick="percent()">%</button>
-      <button class="btn-op" onclick="inputOp('/')">÷</button>
+  </div>
 
-      <button class="btn-num" onclick="inputNum('7')">7</button>
-      <button class="btn-num" onclick="inputNum('8')">8</button>
-      <button class="btn-num" onclick="inputNum('9')">9</button>
-      <button class="btn-op" onclick="inputOp('*')">×</button>
-
-      <button class="btn-num" onclick="inputNum('4')">4</button>
-      <button class="btn-num" onclick="inputNum('5')">5</button>
-      <button class="btn-num" onclick="inputNum('6')">6</button>
-      <button class="btn-op" onclick="inputOp('-')">−</button>
-
-      <button class="btn-num" onclick="inputNum('1')">1</button>
-      <button class="btn-num" onclick="inputNum('2')">2</button>
-      <button class="btn-num" onclick="inputNum('3')">3</button>
-      <button class="btn-op" onclick="inputOp('+')">+</button>
-
-      <button class="btn-num span-2" onclick="inputNum('0')">0</button>
-      <button class="btn-num" onclick="inputDot()">.</button>
-      <button class="btn-eq" onclick="calculate()">=</button>
-    </div>
+  <!-- 날씨 바 -->
+  <div class="weather-bar" id="weather-bar">
+    <div class="weather-loading" id="weather-loading">🌤 날씨 불러오는 중...</div>
+    <div id="weather-content" style="display:none; width:100%; display:none; align-items:center; gap:24px; flex-wrap:wrap;">
+      <div class="weather-location">
+        <span>📍</span><span id="w-city">-</span>
+      </div>
+      <div class="weather-main">
+        <div class="weather-emoji" id="w-emoji">🌤</div>
+        <div>
+          <div class="weather-temp" id="w-temp">--°C</div>
+          <div class="weather-desc" id="w-desc">-</div>
+        </div>
+      </div>
+      <div class="weather-details">
+        <div class="weather-item">
+          <span class="label">체감</span>
+          <span class="value" id="w-feel">--°C</span>
+        </div>
+        <div class="weather-item">
+          <span class="label">습도</span>
+          <span class="value" id="w-humidity">--%</span>
+        </div>
+        <div class="weather-item">
+          <span class="label">바람</span>
+          <span class="value" id="w-wind">--m/s</span>
+        </div>
+        <div class="weather-item">
+          <span class="label">가시거리</span>
+          <span class="value" id="w-vis">--km</span>
+        </div>
+      </div>
+      <div class="weather-updated" id="w-updated"></div>
     </div>
   </div>
 
   <script>
-    let current = '0';
-    let expression = '';
-    let operator = null;
-    let prevValue = null;
-    let justCalculated = false;
-
+    // ── 계산기 ──
+    let current='0', expression='', operator=null, prevValue=null, justCalculated=false;
     const resultEl = document.getElementById('result');
     const expressionEl = document.getElementById('expression');
 
     function updateDisplay() {
       resultEl.textContent = current;
-      // 폰트 크기 자동 조절
       const len = current.length;
-      if (len > 12) resultEl.style.fontSize = '22px';
-      else if (len > 9) resultEl.style.fontSize = '28px';
-      else if (len > 6) resultEl.style.fontSize = '34px';
-      else resultEl.style.fontSize = '40px';
+      if (len>12) resultEl.style.fontSize='22px';
+      else if (len>9) resultEl.style.fontSize='28px';
+      else if (len>6) resultEl.style.fontSize='34px';
+      else resultEl.style.fontSize='40px';
     }
 
     function inputNum(n) {
-      if (justCalculated) {
-        current = n;
-        expression = '';
-        justCalculated = false;
-      } else if (current === '0') {
-        current = n;
-      } else {
-        if (current.replace('-', '').length >= 15) return;
-        current += n;
-      }
+      if (justCalculated) { current=n; expression=''; justCalculated=false; }
+      else if (current==='0') { current=n; }
+      else { if (current.replace('-','').length>=15) return; current+=n; }
       updateDisplay();
     }
 
     function inputDot() {
-      if (justCalculated) {
-        current = '0.';
-        expression = '';
-        justCalculated = false;
-      } else if (!current.includes('.')) {
-        current += '.';
-      }
+      if (justCalculated) { current='0.'; expression=''; justCalculated=false; }
+      else if (!current.includes('.')) { current+='.'; }
       updateDisplay();
     }
 
     function inputOp(op) {
-      justCalculated = false;
-      if (operator && prevValue !== null) {
-        const result = compute(prevValue, parseFloat(current), operator);
-        current = formatNum(result);
-        prevValue = result;
-      } else {
-        prevValue = parseFloat(current);
-      }
-      operator = op;
-      const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[op];
-      expression = formatNum(prevValue) + ' ' + opSymbol;
-      expressionEl.textContent = expression;
-      current = '0';
-      updateDisplay();
+      justCalculated=false;
+      if (operator && prevValue!==null) {
+        const r=compute(prevValue,parseFloat(current),operator);
+        current=formatNum(r); prevValue=r;
+      } else { prevValue=parseFloat(current); }
+      operator=op;
+      const sym={'+':'+','-':'−','*':'×','/':'÷'}[op];
+      expressionEl.textContent=formatNum(prevValue)+' '+sym;
+      current='0'; updateDisplay();
     }
 
     function calculate() {
-      if (operator === null || prevValue === null) return;
-      const curr = parseFloat(current);
-      expression = expressionEl.textContent + ' ' + current + ' =';
-      expressionEl.textContent = expression;
-      const result = compute(prevValue, curr, operator);
-      current = formatNum(result);
-      operator = null;
-      prevValue = null;
-      justCalculated = true;
+      if (!operator||prevValue===null) return;
+      const curr=parseFloat(current);
+      expressionEl.textContent+=' '+current+' =';
+      const r=compute(prevValue,curr,operator);
+      current=formatNum(r); operator=null; prevValue=null; justCalculated=true;
       updateDisplay();
     }
 
-    function compute(a, b, op) {
-      switch (op) {
-        case '+': return a + b;
-        case '-': return a - b;
-        case '*': return a * b;
-        case '/': return b === 0 ? 'Error' : a / b;
-      }
+    function compute(a,b,op) {
+      if (op==='+') return a+b;
+      if (op==='-') return a-b;
+      if (op==='*') return a*b;
+      if (op==='/') return b===0?'Error':a/b;
     }
 
     function formatNum(n) {
-      if (n === 'Error') return 'Error';
-      // 소수점 처리
-      const str = parseFloat(n.toPrecision(12)).toString();
-      return str;
+      if (n==='Error') return 'Error';
+      return parseFloat(n.toPrecision(12)).toString();
     }
 
     function clearAll() {
-      current = '0';
-      expression = '';
-      operator = null;
-      prevValue = null;
-      justCalculated = false;
-      expressionEl.textContent = '';
-      updateDisplay();
+      current='0'; expression=''; operator=null; prevValue=null; justCalculated=false;
+      expressionEl.textContent=''; updateDisplay();
     }
 
     function toggleSign() {
-      if (current === '0' || current === 'Error') return;
-      current = current.startsWith('-') ? current.slice(1) : '-' + current;
+      if (current==='0'||current==='Error') return;
+      current=current.startsWith('-')?current.slice(1):'-'+current;
       updateDisplay();
     }
 
     function percent() {
-      const val = parseFloat(current);
-      if (isNaN(val)) return;
-      current = formatNum(val / 100);
-      updateDisplay();
+      const v=parseFloat(current);
+      if (!isNaN(v)) { current=formatNum(v/100); updateDisplay(); }
     }
 
-    // 시계
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    document.addEventListener('keydown', e => {
+      if (e.key>='0'&&e.key<='9') inputNum(e.key);
+      else if (e.key==='.') inputDot();
+      else if (e.key==='+') inputOp('+');
+      else if (e.key==='-') inputOp('-');
+      else if (e.key==='*') inputOp('*');
+      else if (e.key==='/') { e.preventDefault(); inputOp('/'); }
+      else if (e.key==='Enter'||e.key==='=') calculate();
+      else if (e.key==='Escape') clearAll();
+      else if (e.key==='Backspace') {
+        if (current.length>1&&!justCalculated) {
+          current=current.slice(0,-1);
+          if (current==='-') current='0';
+        } else { current='0'; }
+        updateDisplay();
+      }
+    });
+
+    // ── 시계 ──
+    const days=['일','월','화','수','목','금','토'];
     function updateClock() {
-      const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      const s = String(now.getSeconds()).padStart(2, '0');
-      document.getElementById('clock-time').textContent = `${h}:${m}:${s}`;
-      const dateStr = `${now.getFullYear()}. ${now.getMonth()+1}. ${now.getDate()}. (${days[now.getDay()]})`;
-      document.getElementById('clock-date').textContent = dateStr;
+      const now=new Date();
+      const h=String(now.getHours()).padStart(2,'0');
+      const m=String(now.getMinutes()).padStart(2,'0');
+      const s=String(now.getSeconds()).padStart(2,'0');
+      document.getElementById('clock-time').textContent=`${h}:${m}:${s}`;
+      document.getElementById('clock-date').textContent=
+        `${now.getFullYear()}. ${now.getMonth()+1}. ${now.getDate()}. (${days[now.getDay()]})`;
     }
     updateClock();
     setInterval(updateClock, 1000);
 
-    // 키보드 지원
-    document.addEventListener('keydown', (e) => {
-      if (e.key >= '0' && e.key <= '9') inputNum(e.key);
-      else if (e.key === '.') inputDot();
-      else if (e.key === '+') inputOp('+');
-      else if (e.key === '-') inputOp('-');
-      else if (e.key === '*') inputOp('*');
-      else if (e.key === '/') { e.preventDefault(); inputOp('/'); }
-      else if (e.key === 'Enter' || e.key === '=') calculate();
-      else if (e.key === 'Escape') clearAll();
-      else if (e.key === 'Backspace') {
-        if (current.length > 1 && !justCalculated) {
-          current = current.slice(0, -1);
-          if (current === '-') current = '0';
-        } else {
-          current = '0';
+    // ── iframe 차단 감지 ──
+    const frame=document.getElementById('cctv-frame');
+    const fallback=document.getElementById('cctv-fallback');
+    setTimeout(()=>{
+      try {
+        const doc=frame.contentDocument||frame.contentWindow.document;
+        if (!doc||doc.body===null||doc.body.innerHTML.trim()==='') {
+          frame.style.display='none'; fallback.style.display='flex';
         }
-        updateDisplay();
+      } catch(e) { /* cross-origin = 로드 성공 */ }
+    }, 3000);
+
+    // ── 날씨 (wttr.in 무료 API, 위치 자동 감지) ──
+    const weatherEmoji = {
+      113:'☀️', 116:'⛅', 119:'☁️', 122:'☁️',
+      143:'🌫', 176:'🌦', 179:'🌨', 182:'🌧',
+      185:'🌧', 200:'⛈', 227:'🌨', 230:'❄️',
+      248:'🌫', 260:'🌫', 263:'🌦', 266:'🌦',
+      281:'🌧', 284:'🌧', 293:'🌦', 296:'🌦',
+      299:'🌧', 302:'🌧', 305:'🌧', 308:'🌧',
+      311:'🌧', 314:'🌧', 317:'🌨', 320:'🌨',
+      323:'🌨', 326:'🌨', 329:'❄️', 332:'❄️',
+      335:'❄️', 338:'❄️', 350:'🌧', 353:'🌦',
+      356:'🌧', 359:'🌧', 362:'🌨', 365:'🌨',
+      368:'🌨', 371:'❄️', 374:'🌨', 377:'🌨',
+      386:'⛈', 389:'⛈', 392:'⛈', 395:'❄️'
+    };
+
+    async function loadWeather() {
+      try {
+        const res = await fetch('https://wttr.in/?format=j1&lang=ko');
+        if (!res.ok) throw new Error('fetch failed');
+        const data = await res.json();
+        const cur = data.current_condition[0];
+        const area = data.nearest_area[0];
+
+        const city = area.areaName[0].value + ', ' + area.country[0].value;
+        const temp = cur.temp_C + '°C';
+        const feel = cur.FeelsLikeC + '°C';
+        const humidity = cur.humidity + '%';
+        const wind = Math.round(cur.windspeedKmph / 3.6) + 'm/s';
+        const vis = cur.visibility + 'km';
+        const code = parseInt(cur.weatherCode);
+        const emoji = weatherEmoji[code] || '🌤';
+        const desc = cur.lang_ko ? cur.lang_ko[0].value : cur.weatherDesc[0].value;
+
+        const now = new Date();
+        const updated = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} 업데이트`;
+
+        document.getElementById('w-city').textContent = city;
+        document.getElementById('w-temp').textContent = temp;
+        document.getElementById('w-feel').textContent = feel;
+        document.getElementById('w-humidity').textContent = humidity;
+        document.getElementById('w-wind').textContent = wind;
+        document.getElementById('w-vis').textContent = vis;
+        document.getElementById('w-emoji').textContent = emoji;
+        document.getElementById('w-desc').textContent = desc;
+        document.getElementById('w-updated').textContent = updated;
+
+        document.getElementById('weather-loading').style.display = 'none';
+        const content = document.getElementById('weather-content');
+        content.style.display = 'flex';
+      } catch(e) {
+        document.getElementById('weather-loading').textContent = '날씨 정보를 불러올 수 없습니다.';
       }
-    });
+    }
+
+    loadWeather();
+    setInterval(loadWeather, 10 * 60 * 1000); // 10분마다 갱신
   </script>
 </body>
 </html>
