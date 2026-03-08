@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>계산기</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .calculator {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 24px;
+      width: 320px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .display {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: right;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .expression {
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 14px;
+      min-height: 20px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .result {
+      color: #fff;
+      font-size: 40px;
+      font-weight: 300;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      padding: 18px;
+      border: none;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      outline: none;
+    }
+
+    button:active {
+      transform: scale(0.93);
+    }
+
+    /* 숫자 버튼 */
+    .btn-num {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .btn-num:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* 연산자 버튼 */
+    .btn-op {
+      background: rgba(83, 130, 255, 0.2);
+      color: #7fa8ff;
+      border: 1px solid rgba(83, 130, 255, 0.2);
+    }
+
+    .btn-op:hover {
+      background: rgba(83, 130, 255, 0.35);
+    }
+
+    /* 등호 버튼 */
+    .btn-eq {
+      background: linear-gradient(135deg, #5382ff, #3a5fe0);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 20px rgba(83, 130, 255, 0.4);
+    }
+
+    .btn-eq:hover {
+      background: linear-gradient(135deg, #6b95ff, #4f72f0);
+      box-shadow: 0 4px 25px rgba(83, 130, 255, 0.6);
+    }
+
+    /* 초기화 버튼 */
+    .btn-clear {
+      background: rgba(255, 80, 80, 0.15);
+      color: #ff7070;
+      border: 1px solid rgba(255, 80, 80, 0.15);
+    }
+
+    .btn-clear:hover {
+      background: rgba(255, 80, 80, 0.3);
+    }
+
+    /* 특수 버튼 (CE, ±, %) */
+    .btn-special {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .btn-special:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .span-2 {
+      grid-column: span 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="buttons">
+      <button class="btn-clear" onclick="clearAll()">AC</button>
+      <button class="btn-special" onclick="toggleSign()">±</button>
+      <button class="btn-special" onclick="percent()">%</button>
+      <button class="btn-op" onclick="inputOp('/')">÷</button>
+
+      <button class="btn-num" onclick="inputNum('7')">7</button>
+      <button class="btn-num" onclick="inputNum('8')">8</button>
+      <button class="btn-num" onclick="inputNum('9')">9</button>
+      <button class="btn-op" onclick="inputOp('*')">×</button>
+
+      <button class="btn-num" onclick="inputNum('4')">4</button>
+      <button class="btn-num" onclick="inputNum('5')">5</button>
+      <button class="btn-num" onclick="inputNum('6')">6</button>
+      <button class="btn-op" onclick="inputOp('-')">−</button>
+
+      <button class="btn-num" onclick="inputNum('1')">1</button>
+      <button class="btn-num" onclick="inputNum('2')">2</button>
+      <button class="btn-num" onclick="inputNum('3')">3</button>
+      <button class="btn-op" onclick="inputOp('+')">+</button>
+
+      <button class="btn-num span-2" onclick="inputNum('0')">0</button>
+      <button class="btn-num" onclick="inputDot()">.</button>
+      <button class="btn-eq" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <script>
+    let current = '0';
+    let expression = '';
+    let operator = null;
+    let prevValue = null;
+    let justCalculated = false;
+
+    const resultEl = document.getElementById('result');
+    const expressionEl = document.getElementById('expression');
+
+    function updateDisplay() {
+      resultEl.textContent = current;
+      // 폰트 크기 자동 조절
+      const len = current.length;
+      if (len > 12) resultEl.style.fontSize = '22px';
+      else if (len > 9) resultEl.style.fontSize = '28px';
+      else if (len > 6) resultEl.style.fontSize = '34px';
+      else resultEl.style.fontSize = '40px';
+    }
+
+    function inputNum(n) {
+      if (justCalculated) {
+        current = n;
+        expression = '';
+        justCalculated = false;
+      } else if (current === '0') {
+        current = n;
+      } else {
+        if (current.replace('-', '').length >= 15) return;
+        current += n;
+      }
+      updateDisplay();
+    }
+
+    function inputDot() {
+      if (justCalculated) {
+        current = '0.';
+        expression = '';
+        justCalculated = false;
+      } else if (!current.includes('.')) {
+        current += '.';
+      }
+      updateDisplay();
+    }
+
+    function inputOp(op) {
+      justCalculated = false;
+      if (operator && prevValue !== null) {
+        const result = compute(prevValue, parseFloat(current), operator);
+        current = formatNum(result);
+        prevValue = result;
+      } else {
+        prevValue = parseFloat(current);
+      }
+      operator = op;
+      const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[op];
+      expression = formatNum(prevValue) + ' ' + opSymbol;
+      expressionEl.textContent = expression;
+      current = '0';
+      updateDisplay();
+    }
+
+    function calculate() {
+      if (operator === null || prevValue === null) return;
+      const curr = parseFloat(current);
+      expression = expressionEl.textContent + ' ' + current + ' =';
+      expressionEl.textContent = expression;
+      const result = compute(prevValue, curr, operator);
+      current = formatNum(result);
+      operator = null;
+      prevValue = null;
+      justCalculated = true;
+      updateDisplay();
+    }
+
+    function compute(a, b, op) {
+      switch (op) {
+        case '+': return a + b;
+        case '-': return a - b;
+        case '*': return a * b;
+        case '/': return b === 0 ? 'Error' : a / b;
+      }
+    }
+
+    function formatNum(n) {
+      if (n === 'Error') return 'Error';
+      // 소수점 처리
+      const str = parseFloat(n.toPrecision(12)).toString();
+      return str;
+    }
+
+    function clearAll() {
+      current = '0';
+      expression = '';
+      operator = null;
+      prevValue = null;
+      justCalculated = false;
+      expressionEl.textContent = '';
+      updateDisplay();
+    }
+
+    function toggleSign() {
+      if (current === '0' || current === 'Error') return;
+      current = current.startsWith('-') ? current.slice(1) : '-' + current;
+      updateDisplay();
+    }
+
+    function percent() {
+      const val = parseFloat(current);
+      if (isNaN(val)) return;
+      current = formatNum(val / 100);
+      updateDisplay();
+    }
+
+    // 키보드 지원
+    document.addEventListener('keydown', (e) => {
+      if (e.key >= '0' && e.key <= '9') inputNum(e.key);
+      else if (e.key === '.') inputDot();
+      else if (e.key === '+') inputOp('+');
+      else if (e.key === '-') inputOp('-');
+      else if (e.key === '*') inputOp('*');
+      else if (e.key === '/') { e.preventDefault(); inputOp('/'); }
+      else if (e.key === 'Enter' || e.key === '=') calculate();
+      else if (e.key === 'Escape') clearAll();
+      else if (e.key === 'Backspace') {
+        if (current.length > 1 && !justCalculated) {
+          current = current.slice(0, -1);
+          if (current === '-') current = '0';
+        } else {
+          current = '0';
+        }
+        updateDisplay();
+      }
+    });
+  </script>
+</body>
+</html>
