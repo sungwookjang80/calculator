@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>계산기 + CCTV</title>
+  <title>계산기 + CCTV + 챗봇</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin:0; padding:0; box-sizing:border-box; }
 
     body {
       display: flex;
@@ -18,21 +18,241 @@
       gap: 20px;
     }
 
-    /* ── 상단: CCTV + 계산기 ── */
     .main-row {
       display: flex;
-      gap: 24px;
+      gap: 20px;
       align-items: flex-start;
     }
 
-    /* ── CCTV 패널 ── */
+    /* ── 챗봇 ── */
+    .chat-panel {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      width: 300px;
+      height: 520px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 14px 18px;
+      background: rgba(0,0,0,0.3);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .bot-dot {
+      width: 8px; height: 8px;
+      background: #4ade80;
+      border-radius: 50%;
+      animation: pulse-green 2s infinite;
+    }
+    @keyframes pulse-green {
+      0%,100% { opacity:1; }
+      50% { opacity:0.4; }
+    }
+
+    .key-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.6);
+      font-size: 11px;
+      padding: 4px 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .key-btn:hover { background: rgba(255,255,255,0.15); }
+
+    /* API 키 입력 모달 */
+    .key-modal {
+      display: none;
+      position: absolute;
+      top: 50px; left: 10px; right: 10px;
+      background: #1e2d4a;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 16px;
+      z-index: 10;
+      gap: 10px;
+      flex-direction: column;
+    }
+    .key-modal.open { display: flex; }
+    .key-modal label { color: rgba(255,255,255,0.7); font-size: 12px; }
+    .key-modal input {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 12px;
+      padding: 8px 10px;
+      outline: none;
+      width: 100%;
+    }
+    .key-modal input::placeholder { color: rgba(255,255,255,0.3); }
+    .key-modal-btns { display: flex; gap: 8px; }
+    .key-save-btn {
+      flex: 1;
+      padding: 8px;
+      background: linear-gradient(135deg,#5382ff,#3a5fe0);
+      color: #fff; border: none;
+      border-radius: 8px; font-size: 12px;
+      cursor: pointer;
+    }
+    .key-cancel-btn {
+      flex: 1; padding: 8px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.6); border: none;
+      border-radius: 8px; font-size: 12px;
+      cursor: pointer;
+    }
+    .key-hint {
+      color: rgba(255,255,255,0.35);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    /* 채팅창 */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scroll-behavior: smooth;
+    }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+    .msg {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .msg.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .avatar.bot { background: linear-gradient(135deg,#5382ff,#8b5cf6); }
+    .avatar.user { background: rgba(255,255,255,0.1); }
+
+    .bubble {
+      max-width: 210px;
+      padding: 9px 13px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .msg.bot .bubble {
+      background: rgba(255,255,255,0.08);
+      color: #e8e8e8;
+      border-bottom-left-radius: 4px;
+    }
+    .msg.user .bubble {
+      background: linear-gradient(135deg,#5382ff,#3a5fe0);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    /* 타이핑 인디케이터 */
+    .typing {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 14px;
+    }
+    .typing span {
+      width: 6px; height: 6px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%,60%,100% { transform:translateY(0); }
+      30% { transform:translateY(-5px); }
+    }
+
+    /* 입력창 */
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      background: rgba(0,0,0,0.2);
+    }
+
+    .chat-input {
+      flex: 1;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 13px;
+      padding: 9px 13px;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      max-height: 80px;
+    }
+    .chat-input::placeholder { color: rgba(255,255,255,0.3); }
+    .chat-input:focus { border-color: rgba(83,130,255,0.5); }
+
+    .send-btn {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg,#5382ff,#3a5fe0);
+      border: none; border-radius: 12px;
+      color: #fff; font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+    }
+    .send-btn:hover { opacity: 0.85; }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* 키 없을 때 안내 */
+    .no-key-msg {
+      font-size: 11px;
+      color: rgba(255,200,100,0.8);
+      text-align: center;
+      padding: 0 14px 8px;
+    }
+    .no-key-msg a { color: #7fa8ff; cursor: pointer; text-decoration: underline; }
+
+    /* ── CCTV ── */
     .cctv-panel {
       background: rgba(255,255,255,0.05);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 24px;
       overflow: hidden;
-      width: 640px;
+      width: 560px;
       height: 520px;
       display: flex;
       flex-direction: column;
@@ -47,140 +267,77 @@
       background: rgba(0,0,0,0.3);
       border-bottom: 1px solid rgba(255,255,255,0.07);
     }
-
     .cctv-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+      color: #fff; font-size: 14px; font-weight: 500;
     }
-
     .live-dot {
-      width: 8px; height: 8px;
-      background: #ff4444;
-      border-radius: 50%;
-      animation: pulse 1.2s infinite;
+      width:8px; height:8px; background:#ff4444;
+      border-radius:50%; animation:pulse 1.2s infinite;
     }
-
     @keyframes pulse {
-      0%,100% { opacity:1; transform:scale(1); }
-      50% { opacity:0.4; transform:scale(0.8); }
+      0%,100%{opacity:1;transform:scale(1);}
+      50%{opacity:0.4;transform:scale(0.8);}
     }
-
     .cctv-link-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background: rgba(83,130,255,0.25);
-      color: #7fa8ff;
-      border: 1px solid rgba(83,130,255,0.3);
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 12px;
-      transition: background 0.15s;
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 12px;
+      background:rgba(83,130,255,0.25); color:#7fa8ff;
+      border:1px solid rgba(83,130,255,0.3); border-radius:8px;
+      text-decoration:none; font-size:12px; transition:background 0.15s;
     }
-    .cctv-link-btn:hover { background: rgba(83,130,255,0.45); }
-
-    .cctv-body { flex: 1; position: relative; }
-
+    .cctv-link-btn:hover { background:rgba(83,130,255,0.45); }
+    .cctv-body { flex:1; position:relative; }
     .cctv-iframe { width:100%; height:100%; border:none; display:block; }
-
     .cctv-fallback {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      gap: 16px;
-      color: rgba(255,255,255,0.5);
-      text-align: center;
-      padding: 24px;
+      display:none; flex-direction:column; align-items:center;
+      justify-content:center; height:100%; gap:16px;
+      color:rgba(255,255,255,0.5); text-align:center; padding:24px;
     }
-    .cctv-fallback .icon { font-size: 48px; }
-    .cctv-fallback p { font-size: 14px; line-height: 1.6; }
-
+    .cctv-fallback .icon { font-size:48px; }
+    .cctv-fallback p { font-size:14px; line-height:1.6; }
     .open-btn {
-      padding: 12px 24px;
-      background: linear-gradient(135deg, #5382ff, #3a5fe0);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-size: 14px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: opacity 0.15s;
+      padding:12px 24px;
+      background:linear-gradient(135deg,#5382ff,#3a5fe0);
+      color:#fff; border:none; border-radius:12px;
+      font-size:14px; cursor:pointer; text-decoration:none;
+      transition:opacity 0.15s;
     }
-    .open-btn:hover { opacity: 0.85; }
+    .open-btn:hover { opacity:0.85; }
 
     /* ── 시계 + 계산기 ── */
-    .right-panel { display: flex; flex-direction: column; }
-
-    .clock { text-align: center; margin-bottom: 16px; }
+    .right-panel { display:flex; flex-direction:column; }
+    .clock { text-align:center; margin-bottom:16px; }
     .clock-time { color:#fff; font-size:28px; font-weight:200; letter-spacing:4px; }
     .clock-date { color:rgba(255,255,255,0.45); font-size:13px; margin-top:4px; letter-spacing:1px; }
 
     .calculator {
-      background: rgba(255,255,255,0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      padding: 24px;
-      width: 320px;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+      background:rgba(255,255,255,0.05);
+      backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:24px; padding:24px; width:300px;
+      box-shadow:0 25px 60px rgba(0,0,0,0.5);
     }
-
     .display {
-      background: rgba(0,0,0,0.3);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
-      text-align: right;
-      min-height: 100px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
+      background:rgba(0,0,0,0.3); border-radius:16px;
+      padding:20px; margin-bottom:20px; text-align:right;
+      min-height:100px; display:flex; flex-direction:column; justify-content:flex-end;
     }
-
     .expression {
-      color: rgba(255,255,255,0.4);
-      font-size: 14px;
-      min-height: 20px;
-      margin-bottom: 8px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      color:rgba(255,255,255,0.4); font-size:14px; min-height:20px;
+      margin-bottom:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     }
-
     .result {
-      color: #fff;
-      font-size: 40px;
-      font-weight: 300;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      color:#fff; font-size:38px; font-weight:300;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     }
-
-    .buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-
+    .buttons { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
     button {
-      padding: 18px;
-      border: none;
-      border-radius: 14px;
-      font-size: 18px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-      outline: none;
+      padding:16px; border:none; border-radius:14px;
+      font-size:17px; font-weight:500; cursor:pointer;
+      transition:all 0.15s; outline:none;
     }
-    button:active { transform: scale(0.93); }
-
+    button:active { transform:scale(0.93); }
     .btn-num { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.06); }
     .btn-num:hover { background:rgba(255,255,255,0.15); }
     .btn-op { background:rgba(83,130,255,0.2); color:#7fa8ff; border:1px solid rgba(83,130,255,0.2); }
@@ -191,385 +348,520 @@
     .btn-clear:hover { background:rgba(255,80,80,0.3); }
     .btn-special { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.06); }
     .btn-special:hover { background:rgba(255,255,255,0.12); }
-    .span-2 { grid-column: span 2; }
+    .span-2 { grid-column:span 2; }
 
     /* ── 날씨 바 ── */
     .weather-bar {
-      width: 100%;
-      max-width: 1008px;
-      background: rgba(255,255,255,0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 18px;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      flex-wrap: wrap;
+      width:100%; max-width:1200px;
+      background:rgba(255,255,255,0.05); backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,0.1); border-radius:18px;
+      padding:16px 24px; display:flex; align-items:center; gap:24px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.3); flex-wrap:wrap;
     }
+    .weather-location { display:flex; align-items:center; gap:6px; color:rgba(255,255,255,0.5); font-size:13px; }
+    .weather-main { display:flex; align-items:center; gap:12px; flex:1; }
+    .weather-emoji { font-size:32px; }
+    .weather-temp { color:#fff; font-size:28px; font-weight:300; }
+    .weather-desc { color:rgba(255,255,255,0.6); font-size:14px; }
+    .weather-details { display:flex; gap:20px; }
+    .weather-item { display:flex; flex-direction:column; align-items:center; gap:2px; }
+    .weather-item .label { color:rgba(255,255,255,0.4); font-size:11px; }
+    .weather-item .value { color:rgba(255,255,255,0.85); font-size:14px; font-weight:500; }
+    .weather-loading { color:rgba(255,255,255,0.4); font-size:14px; animation:blink 1.2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+    .weather-updated { color:rgba(255,255,255,0.3); font-size:11px; margin-left:auto; }
 
-    .weather-location {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: rgba(255,255,255,0.5);
-      font-size: 13px;
-    }
-
-    .weather-main {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-    }
-
-    .weather-emoji { font-size: 32px; }
-
-    .weather-temp {
-      color: #fff;
-      font-size: 28px;
-      font-weight: 300;
-    }
-
-    .weather-desc {
-      color: rgba(255,255,255,0.6);
-      font-size: 14px;
-    }
-
-    .weather-details {
-      display: flex;
-      gap: 20px;
-    }
-
-    .weather-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .weather-item .label {
-      color: rgba(255,255,255,0.4);
-      font-size: 11px;
-    }
-
-    .weather-item .value {
-      color: rgba(255,255,255,0.85);
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .weather-loading {
-      color: rgba(255,255,255,0.4);
-      font-size: 14px;
-      animation: blink 1.2s infinite;
-    }
-
-    @keyframes blink {
-      0%,100% { opacity:1; }
-      50% { opacity:0.3; }
-    }
-
-    .weather-updated {
-      color: rgba(255,255,255,0.3);
-      font-size: 11px;
-      margin-left: auto;
-    }
-
-    @media (max-width: 1050px) {
-      .main-row { flex-direction: column; align-items: center; }
-      .cctv-panel { width: 100%; max-width: 640px; }
-      .weather-bar { max-width: 640px; }
+    @media (max-width:1250px) {
+      .main-row { flex-wrap:wrap; justify-content:center; }
+      .cctv-panel { width:100%; max-width:640px; }
+      .weather-bar { max-width:640px; }
     }
   </style>
 </head>
 <body>
 
-  <div class="main-row">
-    <!-- CCTV -->
-    <div class="cctv-panel">
-      <div class="cctv-header">
-        <div class="cctv-title">
-          <div class="live-dot"></div>
-          네이버 실시간 교통 CCTV #6075
-        </div>
-        <a class="cctv-link-btn"
+<div class="main-row">
+
+  <!-- ① 챗봇 -->
+  <div class="chat-panel" style="position:relative;">
+    <div class="chat-header">
+      <div class="chat-header-title">
+        <div class="bot-dot"></div>
+        AI 챗봇
+      </div>
+      <button class="key-btn" id="key-toggle-btn" onclick="toggleKeyModal()">🔑 API 키</button>
+    </div>
+
+    <!-- API 키 모달 -->
+    <div class="key-modal" id="key-modal">
+      <label>Claude API Key</label>
+      <input type="password" id="key-input" placeholder="sk-ant-api03-..." />
+      <div class="key-hint">
+        키는 이 브라우저에만 저장됩니다.<br>
+        <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#7fa8ff;">콘솔에서 발급 →</a>
+      </div>
+      <div class="key-modal-btns">
+        <button class="key-save-btn" onclick="saveKey()">저장</button>
+        <button class="key-cancel-btn" onclick="toggleKeyModal()">취소</button>
+      </div>
+    </div>
+
+    <!-- 메시지 목록 -->
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg bot">
+        <div class="avatar bot">🤖</div>
+        <div class="bubble">안녕하세요! 저는 AI 챗봇입니다.<br>우측 🔑 버튼으로 Claude API 키를 등록하면 대화할 수 있어요.</div>
+      </div>
+    </div>
+
+    <!-- 키 미등록 안내 -->
+    <div class="no-key-msg" id="no-key-msg">
+      🔑 API 키를 등록해야 대화할 수 있어요. <a onclick="toggleKeyModal()">키 등록</a>
+    </div>
+
+    <!-- 입력창 -->
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chat-input"
+        placeholder="메시지를 입력하세요..." rows="1"
+        onkeydown="handleChatKey(event)"
+        oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+  <!-- ② CCTV -->
+  <div class="cctv-panel">
+    <div class="cctv-header">
+      <div class="cctv-title">
+        <div class="live-dot"></div>
+        네이버 실시간 교통 CCTV #6075
+      </div>
+      <a class="cctv-link-btn"
+         href="https://rtt.map.naver.com/end-traffic/ends/web/home#cctv=6075"
+         target="_blank" rel="noopener">↗ 새 탭으로 열기</a>
+    </div>
+    <div class="cctv-body">
+      <iframe id="cctv-frame" class="cctv-iframe"
+        src="https://rtt.map.naver.com/end-traffic/ends/web/home#cctv=6075"
+        title="네이버 교통 CCTV"
+        sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+      <div class="cctv-fallback" id="cctv-fallback">
+        <div class="icon">📡</div>
+        <p>네이버 CCTV는 보안 정책(X-Frame-Options)으로<br>직접 삽입이 차단되어 있습니다.<br>아래 버튼으로 새 탭에서 확인하세요.</p>
+        <a class="open-btn"
            href="https://rtt.map.naver.com/end-traffic/ends/web/home#cctv=6075"
-           target="_blank" rel="noopener">↗ 새 탭으로 열기</a>
-      </div>
-      <div class="cctv-body">
-        <iframe
-          id="cctv-frame"
-          class="cctv-iframe"
-          src="https://rtt.map.naver.com/end-traffic/ends/web/home#cctv=6075"
-          title="네이버 교통 CCTV"
-          sandbox="allow-scripts allow-same-origin allow-forms"
-        ></iframe>
-        <div class="cctv-fallback" id="cctv-fallback">
-          <div class="icon">📡</div>
-          <p>네이버 CCTV는 보안 정책(X-Frame-Options)으로<br>직접 삽입이 차단되어 있습니다.<br>아래 버튼으로 새 탭에서 확인하세요.</p>
-          <a class="open-btn"
-             href="https://rtt.map.naver.com/end-traffic/ends/web/home#cctv=6075"
-             target="_blank" rel="noopener">CCTV 보기</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 시계 + 계산기 -->
-    <div class="right-panel">
-      <div class="clock">
-        <div class="clock-time" id="clock-time">00:00:00</div>
-        <div class="clock-date" id="clock-date"></div>
-      </div>
-      <div class="calculator">
-        <div class="display">
-          <div class="expression" id="expression"></div>
-          <div class="result" id="result">0</div>
-        </div>
-        <div class="buttons">
-          <button class="btn-clear" onclick="clearAll()">AC</button>
-          <button class="btn-special" onclick="toggleSign()">±</button>
-          <button class="btn-special" onclick="percent()">%</button>
-          <button class="btn-op" onclick="inputOp('/')">÷</button>
-
-          <button class="btn-num" onclick="inputNum('7')">7</button>
-          <button class="btn-num" onclick="inputNum('8')">8</button>
-          <button class="btn-num" onclick="inputNum('9')">9</button>
-          <button class="btn-op" onclick="inputOp('*')">×</button>
-
-          <button class="btn-num" onclick="inputNum('4')">4</button>
-          <button class="btn-num" onclick="inputNum('5')">5</button>
-          <button class="btn-num" onclick="inputNum('6')">6</button>
-          <button class="btn-op" onclick="inputOp('-')">−</button>
-
-          <button class="btn-num" onclick="inputNum('1')">1</button>
-          <button class="btn-num" onclick="inputNum('2')">2</button>
-          <button class="btn-num" onclick="inputNum('3')">3</button>
-          <button class="btn-op" onclick="inputOp('+')">+</button>
-
-          <button class="btn-num span-2" onclick="inputNum('0')">0</button>
-          <button class="btn-num" onclick="inputDot()">.</button>
-          <button class="btn-eq" onclick="calculate()">=</button>
-        </div>
+           target="_blank" rel="noopener">CCTV 보기</a>
       </div>
     </div>
   </div>
 
-  <!-- 날씨 바 -->
-  <div class="weather-bar" id="weather-bar">
-    <div class="weather-loading" id="weather-loading">🌤 날씨 불러오는 중...</div>
-    <div id="weather-content" style="display:none; width:100%; display:none; align-items:center; gap:24px; flex-wrap:wrap;">
-      <div class="weather-location">
-        <span>📍</span><span id="w-city">-</span>
+  <!-- ③ 시계 + 계산기 -->
+  <div class="right-panel">
+    <div class="clock">
+      <div class="clock-time" id="clock-time">00:00:00</div>
+      <div class="clock-date" id="clock-date"></div>
+    </div>
+    <div class="calculator">
+      <div class="display">
+        <div class="expression" id="expression"></div>
+        <div class="result" id="result">0</div>
       </div>
-      <div class="weather-main">
-        <div class="weather-emoji" id="w-emoji">🌤</div>
-        <div>
-          <div class="weather-temp" id="w-temp">--°C</div>
-          <div class="weather-desc" id="w-desc">-</div>
-        </div>
+      <div class="buttons">
+        <button class="btn-clear" onclick="clearAll()">AC</button>
+        <button class="btn-special" onclick="toggleSign()">±</button>
+        <button class="btn-special" onclick="percent()">%</button>
+        <button class="btn-op" onclick="inputOp('/')">÷</button>
+        <button class="btn-num" onclick="inputNum('7')">7</button>
+        <button class="btn-num" onclick="inputNum('8')">8</button>
+        <button class="btn-num" onclick="inputNum('9')">9</button>
+        <button class="btn-op" onclick="inputOp('*')">×</button>
+        <button class="btn-num" onclick="inputNum('4')">4</button>
+        <button class="btn-num" onclick="inputNum('5')">5</button>
+        <button class="btn-num" onclick="inputNum('6')">6</button>
+        <button class="btn-op" onclick="inputOp('-')">−</button>
+        <button class="btn-num" onclick="inputNum('1')">1</button>
+        <button class="btn-num" onclick="inputNum('2')">2</button>
+        <button class="btn-num" onclick="inputNum('3')">3</button>
+        <button class="btn-op" onclick="inputOp('+')">+</button>
+        <button class="btn-num span-2" onclick="inputNum('0')">0</button>
+        <button class="btn-num" onclick="inputDot()">.</button>
+        <button class="btn-eq" onclick="calculate()">=</button>
       </div>
-      <div class="weather-details">
-        <div class="weather-item">
-          <span class="label">체감</span>
-          <span class="value" id="w-feel">--°C</span>
-        </div>
-        <div class="weather-item">
-          <span class="label">습도</span>
-          <span class="value" id="w-humidity">--%</span>
-        </div>
-        <div class="weather-item">
-          <span class="label">바람</span>
-          <span class="value" id="w-wind">--m/s</span>
-        </div>
-        <div class="weather-item">
-          <span class="label">가시거리</span>
-          <span class="value" id="w-vis">--km</span>
-        </div>
-      </div>
-      <div class="weather-updated" id="w-updated"></div>
     </div>
   </div>
 
-  <script>
-    // ── 계산기 ──
-    let current='0', expression='', operator=null, prevValue=null, justCalculated=false;
-    const resultEl = document.getElementById('result');
-    const expressionEl = document.getElementById('expression');
+</div>
 
-    function updateDisplay() {
-      resultEl.textContent = current;
-      const len = current.length;
-      if (len>12) resultEl.style.fontSize='22px';
-      else if (len>9) resultEl.style.fontSize='28px';
-      else if (len>6) resultEl.style.fontSize='34px';
-      else resultEl.style.fontSize='40px';
-    }
+<!-- 날씨 바 -->
+<div class="weather-bar">
+  <div class="weather-loading" id="weather-loading">🌤 날씨 불러오는 중...</div>
+  <div id="weather-content" style="display:none;width:100%;align-items:center;gap:24px;flex-wrap:wrap;">
+    <div class="weather-location"><span>📍</span><span id="w-city">-</span></div>
+    <div class="weather-main">
+      <div class="weather-emoji" id="w-emoji">🌤</div>
+      <div>
+        <div class="weather-temp" id="w-temp">--°C</div>
+        <div class="weather-desc" id="w-desc">-</div>
+      </div>
+    </div>
+    <div class="weather-details">
+      <div class="weather-item"><span class="label">체감</span><span class="value" id="w-feel">--°C</span></div>
+      <div class="weather-item"><span class="label">습도</span><span class="value" id="w-humidity">--%</span></div>
+      <div class="weather-item"><span class="label">바람</span><span class="value" id="w-wind">--m/s</span></div>
+      <div class="weather-item"><span class="label">가시거리</span><span class="value" id="w-vis">--km</span></div>
+    </div>
+    <div class="weather-updated" id="w-updated"></div>
+  </div>
+</div>
 
-    function inputNum(n) {
-      if (justCalculated) { current=n; expression=''; justCalculated=false; }
-      else if (current==='0') { current=n; }
-      else { if (current.replace('-','').length>=15) return; current+=n; }
-      updateDisplay();
-    }
+<script>
+// ────────────────────────────────
+// 챗봇
+// ────────────────────────────────
+let chatHistory = [];
+let isStreaming = false;
 
-    function inputDot() {
-      if (justCalculated) { current='0.'; expression=''; justCalculated=false; }
-      else if (!current.includes('.')) { current+='.'; }
-      updateDisplay();
-    }
+function getApiKey() { return localStorage.getItem('claude_api_key') || ''; }
 
-    function inputOp(op) {
-      justCalculated=false;
-      if (operator && prevValue!==null) {
-        const r=compute(prevValue,parseFloat(current),operator);
-        current=formatNum(r); prevValue=r;
-      } else { prevValue=parseFloat(current); }
-      operator=op;
-      const sym={'+':'+','-':'−','*':'×','/':'÷'}[op];
-      expressionEl.textContent=formatNum(prevValue)+' '+sym;
-      current='0'; updateDisplay();
-    }
+function toggleKeyModal() {
+  const modal = document.getElementById('key-modal');
+  modal.classList.toggle('open');
+  if (modal.classList.contains('open')) {
+    document.getElementById('key-input').value = getApiKey();
+  }
+}
 
-    function calculate() {
-      if (!operator||prevValue===null) return;
-      const curr=parseFloat(current);
-      expressionEl.textContent+=' '+current+' =';
-      const r=compute(prevValue,curr,operator);
-      current=formatNum(r); operator=null; prevValue=null; justCalculated=true;
-      updateDisplay();
-    }
+function saveKey() {
+  const key = document.getElementById('key-input').value.trim();
+  if (key) {
+    localStorage.setItem('claude_api_key', key);
+    updateKeyStatus();
+    addBotMessage('API 키가 등록되었습니다! 이제 대화를 시작해보세요 😊');
+  }
+  toggleKeyModal();
+}
 
-    function compute(a,b,op) {
-      if (op==='+') return a+b;
-      if (op==='-') return a-b;
-      if (op==='*') return a*b;
-      if (op==='/') return b===0?'Error':a/b;
-    }
+function updateKeyStatus() {
+  const hasKey = !!getApiKey();
+  document.getElementById('no-key-msg').style.display = hasKey ? 'none' : 'block';
+  document.getElementById('send-btn').disabled = !hasKey;
+  document.getElementById('chat-input').disabled = !hasKey;
+  document.getElementById('chat-input').placeholder = hasKey ? '메시지를 입력하세요...' : 'API 키를 먼저 등록하세요';
+}
 
-    function formatNum(n) {
-      if (n==='Error') return 'Error';
-      return parseFloat(n.toPrecision(12)).toString();
-    }
+function addBotMessage(text) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.innerHTML = `<div class="avatar bot">🤖</div><div class="bubble">${escapeHtml(text)}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
 
-    function clearAll() {
-      current='0'; expression=''; operator=null; prevValue=null; justCalculated=false;
-      expressionEl.textContent=''; updateDisplay();
-    }
+function addUserMessage(text) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `<div class="avatar user">👤</div><div class="bubble">${escapeHtml(text)}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
 
-    function toggleSign() {
-      if (current==='0'||current==='Error') return;
-      current=current.startsWith('-')?current.slice(1):'-'+current;
-      updateDisplay();
-    }
+function showTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg bot'; div.id = 'typing-indicator';
+  div.innerHTML = `<div class="avatar bot">🤖</div><div class="bubble typing"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
 
-    function percent() {
-      const v=parseFloat(current);
-      if (!isNaN(v)) { current=formatNum(v/100); updateDisplay(); }
-    }
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
 
-    document.addEventListener('keydown', e => {
-      if (e.key>='0'&&e.key<='9') inputNum(e.key);
-      else if (e.key==='.') inputDot();
-      else if (e.key==='+') inputOp('+');
-      else if (e.key==='-') inputOp('-');
-      else if (e.key==='*') inputOp('*');
-      else if (e.key==='/') { e.preventDefault(); inputOp('/'); }
-      else if (e.key==='Enter'||e.key==='=') calculate();
-      else if (e.key==='Escape') clearAll();
-      else if (e.key==='Backspace') {
-        if (current.length>1&&!justCalculated) {
-          current=current.slice(0,-1);
-          if (current==='-') current='0';
-        } else { current='0'; }
-        updateDisplay();
-      }
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/\n/g,'<br>');
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || isStreaming) return;
+  const apiKey = getApiKey();
+  if (!apiKey) { toggleKeyModal(); return; }
+
+  input.value = ''; input.style.height = 'auto';
+  addUserMessage(text);
+  chatHistory.push({ role: 'user', content: text });
+
+  isStreaming = true;
+  document.getElementById('send-btn').disabled = true;
+  showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system: '당신은 친절하고 유능한 AI 어시스턴트입니다. 한국어로 대화하며, 간결하고 명확하게 답변합니다.',
+        messages: chatHistory
+      })
     });
 
-    // ── 시계 ──
-    const days=['일','월','화','수','목','금','토'];
-    function updateClock() {
-      const now=new Date();
-      const h=String(now.getHours()).padStart(2,'0');
-      const m=String(now.getMinutes()).padStart(2,'0');
-      const s=String(now.getSeconds()).padStart(2,'0');
-      document.getElementById('clock-time').textContent=`${h}:${m}:${s}`;
-      document.getElementById('clock-date').textContent=
-        `${now.getFullYear()}. ${now.getMonth()+1}. ${now.getDate()}. (${days[now.getDay()]})`;
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
+    removeTyping();
 
-    // ── iframe 차단 감지 ──
-    const frame=document.getElementById('cctv-frame');
-    const fallback=document.getElementById('cctv-fallback');
-    setTimeout(()=>{
-      try {
-        const doc=frame.contentDocument||frame.contentWindow.document;
-        if (!doc||doc.body===null||doc.body.innerHTML.trim()==='') {
-          frame.style.display='none'; fallback.style.display='flex';
-        }
-      } catch(e) { /* cross-origin = 로드 성공 */ }
-    }, 3000);
-
-    // ── 날씨 (wttr.in 무료 API, 위치 자동 감지) ──
-    const weatherEmoji = {
-      113:'☀️', 116:'⛅', 119:'☁️', 122:'☁️',
-      143:'🌫', 176:'🌦', 179:'🌨', 182:'🌧',
-      185:'🌧', 200:'⛈', 227:'🌨', 230:'❄️',
-      248:'🌫', 260:'🌫', 263:'🌦', 266:'🌦',
-      281:'🌧', 284:'🌧', 293:'🌦', 296:'🌦',
-      299:'🌧', 302:'🌧', 305:'🌧', 308:'🌧',
-      311:'🌧', 314:'🌧', 317:'🌨', 320:'🌨',
-      323:'🌨', 326:'🌨', 329:'❄️', 332:'❄️',
-      335:'❄️', 338:'❄️', 350:'🌧', 353:'🌦',
-      356:'🌧', 359:'🌧', 362:'🌨', 365:'🌨',
-      368:'🌨', 371:'❄️', 374:'🌨', 377:'🌨',
-      386:'⛈', 389:'⛈', 392:'⛈', 395:'❄️'
-    };
-
-    async function loadWeather() {
-      try {
-        const res = await fetch('https://wttr.in/?format=j1&lang=ko');
-        if (!res.ok) throw new Error('fetch failed');
-        const data = await res.json();
-        const cur = data.current_condition[0];
-        const area = data.nearest_area[0];
-
-        const city = area.areaName[0].value + ', ' + area.country[0].value;
-        const temp = cur.temp_C + '°C';
-        const feel = cur.FeelsLikeC + '°C';
-        const humidity = cur.humidity + '%';
-        const wind = Math.round(cur.windspeedKmph / 3.6) + 'm/s';
-        const vis = cur.visibility + 'km';
-        const code = parseInt(cur.weatherCode);
-        const emoji = weatherEmoji[code] || '🌤';
-        const desc = cur.lang_ko ? cur.lang_ko[0].value : cur.weatherDesc[0].value;
-
-        const now = new Date();
-        const updated = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} 업데이트`;
-
-        document.getElementById('w-city').textContent = city;
-        document.getElementById('w-temp').textContent = temp;
-        document.getElementById('w-feel').textContent = feel;
-        document.getElementById('w-humidity').textContent = humidity;
-        document.getElementById('w-wind').textContent = wind;
-        document.getElementById('w-vis').textContent = vis;
-        document.getElementById('w-emoji').textContent = emoji;
-        document.getElementById('w-desc').textContent = desc;
-        document.getElementById('w-updated').textContent = updated;
-
-        document.getElementById('weather-loading').style.display = 'none';
-        const content = document.getElementById('weather-content');
-        content.style.display = 'flex';
-      } catch(e) {
-        document.getElementById('weather-loading').textContent = '날씨 정보를 불러올 수 없습니다.';
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      const errMsg = err.error?.message || `API 오류 (${res.status})`;
+      if (res.status === 401) {
+        addBotMessage('API 키가 올바르지 않습니다. 🔑 버튼을 눌러 키를 다시 확인해주세요.');
+        localStorage.removeItem('claude_api_key');
+        updateKeyStatus();
+      } else {
+        addBotMessage('오류가 발생했습니다: ' + errMsg);
       }
+      chatHistory.pop();
+    } else {
+      const data = await res.json();
+      const reply = data.content?.[0]?.text || '(응답 없음)';
+      chatHistory.push({ role: 'assistant', content: reply });
+      // 스트리밍 효과 (글자 하나씩)
+      const msgs = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = 'msg bot';
+      div.innerHTML = `<div class="avatar bot">🤖</div><div class="bubble" id="bot-reply"></div>`;
+      msgs.appendChild(div);
+      const bubble = document.getElementById('bot-reply');
+      let i = 0;
+      const chars = reply.split('');
+      function typeChar() {
+        if (i < chars.length) {
+          bubble.innerHTML = escapeHtml(chars.slice(0,i+1).join(''));
+          msgs.scrollTop = msgs.scrollHeight;
+          i++;
+          setTimeout(typeChar, 12);
+        } else {
+          bubble.removeAttribute('id');
+        }
+      }
+      typeChar();
     }
+  } catch(e) {
+    removeTyping();
+    chatHistory.pop();
+    if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+      addBotMessage('네트워크 오류가 발생했습니다. CORS 정책으로 브라우저에서 직접 API 호출이 차단될 수 있습니다.');
+    } else {
+      addBotMessage('오류: ' + e.message);
+    }
+  }
 
-    loadWeather();
-    setInterval(loadWeather, 10 * 60 * 1000); // 10분마다 갱신
-  </script>
+  isStreaming = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+}
+
+// 외부 클릭 시 모달 닫기
+document.addEventListener('click', e => {
+  const modal = document.getElementById('key-modal');
+  const btn = document.getElementById('key-toggle-btn');
+  if (modal.classList.contains('open') && !modal.contains(e.target) && e.target !== btn) {
+    modal.classList.remove('open');
+  }
+});
+
+updateKeyStatus();
+
+// ────────────────────────────────
+// 계산기
+// ────────────────────────────────
+let current='0', expression='', operator=null, prevValue=null, justCalculated=false;
+const resultEl=document.getElementById('result');
+const expressionEl=document.getElementById('expression');
+
+function updateDisplay(){
+  resultEl.textContent=current;
+  const len=current.length;
+  if(len>12)resultEl.style.fontSize='20px';
+  else if(len>9)resultEl.style.fontSize='26px';
+  else if(len>6)resultEl.style.fontSize='32px';
+  else resultEl.style.fontSize='38px';
+}
+
+function inputNum(n){
+  if(justCalculated){current=n;expression='';justCalculated=false;}
+  else if(current==='0'){current=n;}
+  else{if(current.replace('-','').length>=15)return;current+=n;}
+  updateDisplay();
+}
+
+function inputDot(){
+  if(justCalculated){current='0.';expression='';justCalculated=false;}
+  else if(!current.includes('.')){current+='.';}
+  updateDisplay();
+}
+
+function inputOp(op){
+  justCalculated=false;
+  if(operator&&prevValue!==null){
+    const r=compute(prevValue,parseFloat(current),operator);
+    current=formatNum(r);prevValue=r;
+  }else{prevValue=parseFloat(current);}
+  operator=op;
+  const sym={'+':'+','-':'−','*':'×','/':'÷'}[op];
+  expressionEl.textContent=formatNum(prevValue)+' '+sym;
+  current='0';updateDisplay();
+}
+
+function calculate(){
+  if(!operator||prevValue===null)return;
+  const curr=parseFloat(current);
+  expressionEl.textContent+=' '+current+' =';
+  const r=compute(prevValue,curr,operator);
+  current=formatNum(r);operator=null;prevValue=null;justCalculated=true;
+  updateDisplay();
+}
+
+function compute(a,b,op){
+  if(op==='+')return a+b;
+  if(op==='-')return a-b;
+  if(op==='*')return a*b;
+  if(op==='/')return b===0?'Error':a/b;
+}
+
+function formatNum(n){
+  if(n==='Error')return 'Error';
+  return parseFloat(n.toPrecision(12)).toString();
+}
+
+function clearAll(){
+  current='0';expression='';operator=null;prevValue=null;justCalculated=false;
+  expressionEl.textContent='';updateDisplay();
+}
+
+function toggleSign(){
+  if(current==='0'||current==='Error')return;
+  current=current.startsWith('-')?current.slice(1):'-'+current;
+  updateDisplay();
+}
+
+function percent(){
+  const v=parseFloat(current);
+  if(!isNaN(v)){current=formatNum(v/100);updateDisplay();}
+}
+
+document.addEventListener('keydown',e=>{
+  const tag=document.activeElement.tagName;
+  if(tag==='TEXTAREA'||tag==='INPUT')return;
+  if(e.key>='0'&&e.key<='9')inputNum(e.key);
+  else if(e.key==='.')inputDot();
+  else if(e.key==='+')inputOp('+');
+  else if(e.key==='-')inputOp('-');
+  else if(e.key==='*')inputOp('*');
+  else if(e.key==='/'){{e.preventDefault();inputOp('/');}}
+  else if(e.key==='Enter'||e.key==='=')calculate();
+  else if(e.key==='Escape')clearAll();
+  else if(e.key==='Backspace'){
+    if(current.length>1&&!justCalculated){
+      current=current.slice(0,-1);
+      if(current==='-')current='0';
+    }else{current='0';}
+    updateDisplay();
+  }
+});
+
+// ────────────────────────────────
+// 시계
+// ────────────────────────────────
+const days=['일','월','화','수','목','금','토'];
+function updateClock(){
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock-time').textContent=`${h}:${m}:${s}`;
+  document.getElementById('clock-date').textContent=
+    `${now.getFullYear()}. ${now.getMonth()+1}. ${now.getDate()}. (${days[now.getDay()]})`;
+}
+updateClock();
+setInterval(updateClock,1000);
+
+// ────────────────────────────────
+// CCTV 차단 감지
+// ────────────────────────────────
+setTimeout(()=>{
+  try{
+    const doc=document.getElementById('cctv-frame').contentDocument||
+              document.getElementById('cctv-frame').contentWindow.document;
+    if(!doc||doc.body===null||doc.body.innerHTML.trim()===''){
+      document.getElementById('cctv-frame').style.display='none';
+      document.getElementById('cctv-fallback').style.display='flex';
+    }
+  }catch(e){}
+},3000);
+
+// ────────────────────────────────
+// 날씨
+// ────────────────────────────────
+const weatherEmoji={
+  113:'☀️',116:'⛅',119:'☁️',122:'☁️',143:'🌫',176:'🌦',179:'🌨',
+  182:'🌧',185:'🌧',200:'⛈',227:'🌨',230:'❄️',248:'🌫',260:'🌫',
+  263:'🌦',266:'🌦',281:'🌧',284:'🌧',293:'🌦',296:'🌦',299:'🌧',
+  302:'🌧',305:'🌧',308:'🌧',311:'🌧',314:'🌧',317:'🌨',320:'🌨',
+  323:'🌨',326:'🌨',329:'❄️',332:'❄️',335:'❄️',338:'❄️',350:'🌧',
+  353:'🌦',356:'🌧',359:'🌧',362:'🌨',365:'🌨',368:'🌨',371:'❄️',
+  374:'🌨',377:'🌨',386:'⛈',389:'⛈',392:'⛈',395:'❄️'
+};
+
+async function loadWeather(){
+  try{
+    const res=await fetch('https://wttr.in/?format=j1&lang=ko');
+    if(!res.ok)throw new Error('fetch failed');
+    const data=await res.json();
+    const cur=data.current_condition[0];
+    const area=data.nearest_area[0];
+    const city=area.areaName[0].value+', '+area.country[0].value;
+    const code=parseInt(cur.weatherCode);
+    const desc=cur.lang_ko?cur.lang_ko[0].value:cur.weatherDesc[0].value;
+    const now=new Date();
+    document.getElementById('w-city').textContent=city;
+    document.getElementById('w-temp').textContent=cur.temp_C+'°C';
+    document.getElementById('w-feel').textContent=cur.FeelsLikeC+'°C';
+    document.getElementById('w-humidity').textContent=cur.humidity+'%';
+    document.getElementById('w-wind').textContent=Math.round(cur.windspeedKmph/3.6)+'m/s';
+    document.getElementById('w-vis').textContent=cur.visibility+'km';
+    document.getElementById('w-emoji').textContent=weatherEmoji[code]||'🌤';
+    document.getElementById('w-desc').textContent=desc;
+    document.getElementById('w-updated').textContent=
+      `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} 업데이트`;
+    document.getElementById('weather-loading').style.display='none';
+    const wc=document.getElementById('weather-content');
+    wc.style.display='flex';
+  }catch(e){
+    document.getElementById('weather-loading').textContent='날씨 정보를 불러올 수 없습니다.';
+  }
+}
+loadWeather();
+setInterval(loadWeather,600000);
+</script>
 </body>
 </html>
