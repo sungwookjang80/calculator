@@ -20,6 +20,25 @@
       font-family: 'Segoe UI', sans-serif;
     }
 
+    .clock {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .clock-time {
+      color: #fff;
+      font-size: 28px;
+      font-weight: 200;
+      letter-spacing: 4px;
+    }
+
+    .clock-date {
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 13px;
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
     .calculator {
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(20px);
@@ -145,7 +164,12 @@
   </style>
 </head>
 <body>
-  <div class="calculator">
+  <div>
+    <div class="clock">
+      <div class="clock-time" id="clock-time">00:00:00</div>
+      <div class="clock-date" id="clock-date"></div>
+    </div>
+    <div class="calculator">
     <div class="display">
       <div class="expression" id="expression"></div>
       <div class="result" id="result">0</div>
@@ -174,6 +198,7 @@
       <button class="btn-num span-2" onclick="inputNum('0')">0</button>
       <button class="btn-num" onclick="inputDot()">.</button>
       <button class="btn-eq" onclick="calculate()">=</button>
+    </div>
     </div>
   </div>
 
@@ -290,6 +315,20 @@
       current = formatNum(val / 100);
       updateDisplay();
     }
+
+    // 시계
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('clock-time').textContent = `${h}:${m}:${s}`;
+      const dateStr = `${now.getFullYear()}. ${now.getMonth()+1}. ${now.getDate()}. (${days[now.getDay()]})`;
+      document.getElementById('clock-date').textContent = dateStr;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
 
     // 키보드 지원
     document.addEventListener('keydown', (e) => {
